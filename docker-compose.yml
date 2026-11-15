@@ -34,8 +34,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-cold-excursion-development-only}
       SEED_DEMO: ${SEED_DEMO:-true}
       ARTIFACT_DIR: /artifacts
+      BACKUP_DIR: /backups
     ports: ["${BACKEND_PORT:-19201}:8000"]
-    volumes: ["analysis-artifacts:/artifacts"]
+    volumes: ["analysis-artifacts:/artifacts", "analysis-backups:/backups"]
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_healthy}
@@ -75,3 +76,4 @@ volumes:
   db-data:
   redis-data:
   analysis-artifacts:
+  analysis-backups:

@@ -7,7 +7,7 @@ from src.config.settings import ARTIFACT_DIR
 from src.models import Report, Delivery
 from src.schemas.report import ReportInput
 from src.middlewares.auth import current_user, admin_only
-from src.services import reports
+from src.services import reports, maintenance
 from src.services.audit import record
 from src.utils.serialization import report_dict, delivery_dict
 router=APIRouter()
@@ -16,10 +16,12 @@ def listing(db=Depends(get_db),u=Depends(current_user)):
     return [report_dict(r) for r in db.scalars(select(Report).order_by(Report.id.desc()))]
 @router.post('/reports',status_code=201)
 def create(data:ReportInput,db=Depends(get_db),u=Depends(admin_only)):
+    maintenance.deny_writes(db)
     r=reports.create(db,data); record(db,u.email,'report.schedule',{'id':r.id,'destination':r.destination}); db.commit()
     return report_dict(r)
 @router.post('/reports/{id}/toggle')
 def toggle(id:int,db=Depends(get_db),u=Depends(admin_only)):
+    maintenance.deny_writes(db)
     r=db.get(Report,id)
     if not r:raise HTTPException(404,'分发计划不存在')
     r.enabled=not r.enabled;record(db,u.email,'report.toggle',{'id':id,'enabled':r.enabled});db.commit()
